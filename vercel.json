@@ -1,0 +1,22 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "devCommand": "next dev",
+  "installCommand": "npm ci",
+  "regions": ["iad1", "sfo1"],
+  "functions": {
+    "src/app/api/agent/orchestrate/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/agent/reason/route.ts": {
+      "maxDuration": 300,
+      "memory": 3072
+    },
+    "src/app/api/agent/evaluate/route.ts": {
+      "maxDuration": 120,
+      "memory": 2048
+    }
+  }
+}

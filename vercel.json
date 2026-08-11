@@ -11,12 +11,12 @@
       "memory": 1024
     },
     "src/app/api/agent/reason/route.ts": {
-      "maxDuration": 300,
-      "memory": 3072
+      "maxDuration": 60,
+      "memory": 2048
     },
     "src/app/api/agent/evaluate/route.ts": {
-      "maxDuration": 120,
-      "memory": 2048
+      "maxDuration": 60,
+      "memory": 1024
     }
   }
 }

@@ -96,7 +96,7 @@ export default function DashboardPage() {
                   <ShieldCheck className="w-4 h-4 text-emerald-400" /> Evaluation Report Summary
                 </div>
                 <div className="space-y-1 text-zinc-400 text-[11px]">
-                  {evaluation.edgeCasesTested.map((tc, idx) => (
+                  {evaluation.edgeCasesTested.map((tc: any, idx: number) => (
                     <div key={idx} className="flex items-center justify-between">
                       <span>{tc.caseName}</span>
                       <span className={tc.passed ? 'text-emerald-400' : 'text-red-400'}>

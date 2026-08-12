@@ -2,7 +2,13 @@ import { useState } from 'react';
 
 export const useAgentStream = () => {
   const [stage, setStage] = useState('idle');
-  const [logs, setLogs] = useState<string[]>([]);
+  const [logs, setLogs] = useState<{
+  message: string;
+  id: string;
+  timestamp: string;
+  agent: "REASONING_ENGINE" | "EVALUATOR" | "ORCHESTRATOR" | "SYSTEM";
+  level: "INFO" | "WARN" | "ERROR" | "SUCCESS";
+}[]>([]);
   const [plan, setPlan] = useState<any>(null);
   const [artifact, setArtifact] = useState<any>(null);
   const [evaluation, setEvaluation] = useState<any>(null);

@@ -1,14 +1,18 @@
 import { useState } from 'react';
 
-export const useAgentStream = () => {
-  const [stage, setStage] = useState('idle');
-  const [logs, setLogs] = useState<{
+export type PipelineStage = 'idle' | 'orchestrating' | 'reasoning' | 'generating' | 'evaluating' | 'completed' | 'error' | string;
+
+export interface LogEntry {
   message: string;
   id: string;
   timestamp: string;
   agent: "REASONING_ENGINE" | "EVALUATOR" | "ORCHESTRATOR" | "SYSTEM";
   level: "INFO" | "WARN" | "ERROR" | "SUCCESS";
-}[]>([]);
+}
+
+export const useAgentStream = () => {
+  const [stage, setStage] = useState<PipelineStage>('idle');
+  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [plan, setPlan] = useState<any>(null);
   const [artifact, setArtifact] = useState<any>(null);
   const [evaluation, setEvaluation] = useState<any>(null);
@@ -28,7 +32,6 @@ export const useAgentStream = () => {
     setStreamedReasoningText('');
   };
 
-  // THIS IS THE CRITICAL PART MISSING:
   return {
     stage,
     logs,

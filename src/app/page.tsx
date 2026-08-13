@@ -13,7 +13,8 @@ export default function MinimalChat() {
   const [prompt, setPrompt] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [agentStatus, setAgentStatus] = useState('DeepSeek, Qwen & Gemini syncing...');
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,42 +28,57 @@ export default function MinimalChat() {
     const userMsg = prompt;
     setPrompt('');
     setIsGenerating(true);
+    setAgentStatus('DeepSeek (Orchestrator) planning...');
 
     setMessages((prev) => [
       ...prev,
       { id: Date.now().toString(), role: 'user', content: userMsg },
     ]);
 
+    // Dynamic UI status updates to track the multi-agent execution sequence
+    const statusTimer1 = setTimeout(
+      () => setAgentStatus('Qwen (Executor) drafting output...'),
+      3500
+    );
+    const statusTimer2 = setTimeout(
+      () => setAgentStatus('Gemini (Reviewer) polishing & reviewing...'),
+      8500
+    );
+
     try {
-      const response = await fetch('/api/chat', {
+      // Endpoint updated to match your exact folder structure (/api/orchestrator)
+      const response = await fetch('/api/orchestrator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMsg }),
       });
 
-      if (!response.ok) throw new Error('API route issue');
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.reply || `HTTP error! status: ${response.status}`);
+      }
+
       setMessages((prev) => [
         ...prev,
         { id: (Date.now() + 1).toString(), role: 'ai', content: data.reply },
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Chat API Error:', error);
-      
-      // Fallback response so user never gets blocked by local/route errors
-      setTimeout(() => {
-        let fallbackReply = "Hello! I'm here and ready to assist you.";
-        const lower = userMsg.toLowerCase();
-        if (lower.includes('hi') || lower.includes('hello')) {
-          fallbackReply = "Hello! What can I help you build or create today?";
-        }
-        setMessages((prev) => [
-          ...prev,
-          { id: (Date.now() + 1).toString(), role: 'ai', content: fallbackReply },
-        ]);
-      }, 500);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: 'ai',
+          content: `🚨 **Pipeline Error:** ${
+            error.message ||
+            'Failed to connect to the multi-agent backend. Check Netlify logs.'
+          }`,
+        },
+      ]);
     } finally {
+      clearTimeout(statusTimer1);
+      clearTimeout(statusTimer2);
       setIsGenerating(false);
     }
   };
@@ -125,7 +141,7 @@ export default function MinimalChat() {
                   }`}
                 >
                   <div
-                    className={`max-w-[85%] md:max-w-[75%] px-5 py-3.5 text-[15px] leading-relaxed shadow-sm ${
+                    className={`max-w-[85%] md:max-w-[75%] px-5 py-3.5 text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap ${
                       msg.role === 'user'
                         ? isDarkMode
                           ? 'bg-gradient-to-r from-blue-600 to-red-600 text-white rounded-[22px] rounded-tr-[6px]'
@@ -143,14 +159,16 @@ export default function MinimalChat() {
               {isGenerating && (
                 <div className="flex justify-start">
                   <div
-                    className={`px-5 py-3.5 rounded-[22px] rounded-tl-[6px] flex items-center gap-2 ${
+                    className={`px-5 py-3.5 rounded-[22px] rounded-tl-[6px] flex items-center gap-3 ${
                       isDarkMode
-                        ? 'bg-white/10 text-gray-300'
+                        ? 'bg-white/10 text-gray-300 border border-white/10'
                         : 'bg-white/80 text-gray-600 border border-gray-200'
                     }`}
                   >
                     <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-                    <span className="text-[14px]">Thinking...</span>
+                    <span className="text-[14px] animate-pulse font-medium">
+                      {agentStatus}
+                    </span>
                   </div>
                 </div>
               )}
@@ -188,7 +206,14 @@ function ChatInput({
   isGenerating,
   isDarkMode,
   setIsDarkMode,
-}: any) {
+}: {
+  prompt: string;
+  setPrompt: (v: string) => void;
+  handleSubmit: (e: React.FormEvent) => void;
+  isGenerating: boolean;
+  isDarkMode: boolean;
+  setIsDarkMode: (v: boolean) => void;
+}) {
   return (
     <form
       onSubmit={handleSubmit}
@@ -201,7 +226,7 @@ function ChatInput({
       <textarea
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
-        placeholder="Ask AI to create..."
+        placeholder="Ask the agents to create..."
         className={`w-full h-[55px] resize-none bg-transparent border-none outline-none text-[15px] px-4 py-2.5 ${
           isDarkMode
             ? 'text-white placeholder-gray-500'

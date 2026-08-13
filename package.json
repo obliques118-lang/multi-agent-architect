@@ -2,7 +2,6 @@
   "name": "multi-agent-architect",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "npm@10.8.2",
   "scripts": {
     "dev": "next dev",
     "build": "npx @opennextjs/cloudflare build",
@@ -10,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "latest",
+    "@opennextjs/cloudflare": "^0.5.3",
     "lucide-react": "^0.469.0",
     "next": "^15.0.0",
     "react": "^19.0.0",
@@ -24,8 +23,5 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "typescript": "^5",
     "wrangler": "^3.99.0"
-  },
-  "overrides": {
-    "@opennextjs/aws": "latest"
   }
 }

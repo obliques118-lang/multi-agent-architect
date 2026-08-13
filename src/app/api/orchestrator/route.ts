@@ -2,35 +2,25 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const { message } = await req.json();
+    const body = await req.json();
+    const message = body?.message || '';
 
     if (!message) {
-      return NextResponse.json({ error: "Message is required" }, { status: 400 });
+      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    // Simulate network delay to show the beautiful "Thinking..." state
-    await new Promise(resolve => setTimeout(resolve, 1500)); 
+    let reply = "I'm ready to help! What are we working on next?";
+    const lower = message.toLowerCase();
 
-    // Basic logic so it actually replies to you
-    let aiReply = "That sounds interesting! Tell me more about what you want to build.";
-    
-    const lowerMsg = message.toLowerCase();
-    
-    if (lowerMsg.includes("hi") || lowerMsg.includes("hello")) {
-      aiReply = "Hello there! I'm ready to help you ship your next big project. What are we building today?";
-    } else if (lowerMsg.includes("code") || lowerMsg.includes("build")) {
-      aiReply = "I can definitely help with that. Let's break down the requirements step by step.";
-    } else if (lowerMsg.includes("who are you")) {
-      aiReply = "I am your AI assistant, designed to help you write code, design UIs, and ship products faster.";
+    if (lower.includes('hi') || lower.includes('hello')) {
+      reply = "Hello Rajat! How can I help you today?";
+    } else if (lower.includes('theme')) {
+      reply = "You can toggle between Dark and Light themes using the button at the bottom left of the chat box!";
     }
 
-    return NextResponse.json({ reply: aiReply });
-
+    return NextResponse.json({ reply });
   } catch (error) {
-    console.error("API Error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" }, 
-      { status: 500 }
-    );
+    console.error('API Error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

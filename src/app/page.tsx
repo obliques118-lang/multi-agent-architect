@@ -1,161 +1,131 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useAgentStream } from '@/hooks/use-agent-stream';
-import { TerminalOutput } from '@/components/terminal-output';
-import { 
-  Plus, 
-  Mic, 
-  ArrowUp, 
-  Sparkles, 
-  SlidersHorizontal, 
-  RotateCcw,
-  Cpu
-} from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Bot, Loader2 } from 'lucide-react';
 
-export default function DashboardPage() {
-  const [inputPrompt, setInputPrompt] = useState('');
-  const { stage, logs, evaluation, runPipeline, resetPipeline } = useAgentStream();
+type Message = {
+  id: string;
+  role: 'user' | 'ai';
+  content: string;
+};
 
-  const handleStart = (e: React.FormEvent) => {
+export default function ChatUI() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to the latest message
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputPrompt.trim()) return;
-    runPipeline(inputPrompt);
+    if (!input.trim() || isLoading) return;
+
+    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: input };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      // Connects to your production API route
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage.content }),
+      });
+
+      if (!response.ok) throw new Error('Network response failed');
+      
+      const data = await response.json();
+      
+      const aiMessage: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: data.reply };
+      setMessages((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      const errorMessage: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: "Sorry, I'm having trouble connecting to the server." };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <main className="relative min-h-screen w-full flex flex-col items-center justify-between px-6 py-8 bg-gradient-to-br from-[#0a192f] via-[#11224055] to-[#020c1b] text-white overflow-x-hidden">
-      
-      {/* Immersive Moving Fluid Background Layer */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-950/40 via-cyan-900/30 to-slate-950/80 animate-fluid-bg pointer-events-none -z-10" />
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none -z-10 animate-pulse" />
-
-      {/* Top Header */}
-      <div className="w-full max-w-3xl flex items-center justify-between z-10 opacity-70 hover:opacity-100 transition-opacity">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
-            <Cpu className="w-3.5 h-3.5 text-cyan-300" />
-          </div>
-          <span className="text-xs font-medium tracking-widest uppercase">Multi-Agent Core</span>
-        </div>
-        {stage !== 'idle' && (
-          <button 
-            onClick={resetPipeline}
-            className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 transition-all"
-          >
-            <RotateCcw className="w-3 h-3" /> Reset Session
-          </button>
-        )}
-      </div>
-
-      {/* Center Hero & Minimalist Input Capsule */}
-      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-xl text-center z-10 my-auto">
+    <main className="min-h-screen bg-[#121212] flex items-center justify-center p-4 font-sans">
+      <div className="w-full max-w-[420px] bg-[#242424] rounded-[24px] p-6 shadow-2xl flex flex-col h-[550px] border border-white/5 relative">
         
-        {/* Minimalist Subtitle */}
-        <p className="text-white/60 text-sm md:text-base font-light tracking-wide mb-8">
-          What’s on your mind today?
-        </p>
+        {/* Header - Matches the video exactly */}
+        {messages.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-center space-y-3">
+            <div className="mb-2">
+              <Bot className="w-12 h-12 text-white" strokeWidth={1.5} />
+            </div>
+            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-fuchsia-400">
+              Ask AI Anything
+            </h1>
+            <p className="text-[#888888] text-[13px] leading-relaxed max-w-[280px]">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent.
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 pb-4 border-b border-white/5 mb-4">
+             <div className="flex items-center justify-center">
+              <Bot className="w-7 h-7 text-white" />
+            </div>
+            <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-fuchsia-400">
+              Ask AI Anything
+            </h1>
+          </div>
+        )}
 
-        {/* Floating Frosted Glass Capsule Search Bar */}
-        <form onSubmit={handleStart} className="w-full">
-          <div className="relative flex flex-col bg-white/[0.07] backdrop-blur-2xl border border-white/20 rounded-[28px] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] p-3.5 transition-all focus-within:bg-white/[0.12] focus-within:border-white/40 focus-within:shadow-[0_8px_40px_0_rgba(56,189,248,0.2)]">
-            
-            <input
-              type="text"
-              value={inputPrompt}
-              onChange={(e) => setInputPrompt(e.target.value)}
-              placeholder="Ask me anything..."
-              className="w-full bg-transparent border-none outline-none text-white placeholder-white/40 text-base md:text-lg px-3 py-2 font-light"
-            />
-
-            {/* Bottom Controls inside the Capsule */}
-            <div className="flex items-center justify-between pt-2 px-1 border-t border-white/10 mt-1">
-              <div className="flex items-center gap-1.5">
-                <button 
-                  type="button" 
-                  className="p-2 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors"
-                  title="Add Attachment"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-                <button 
-                  type="button" 
-                  className="p-2 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors"
-                  title="Tools & Agents"
-                >
-                  <Sparkles className="w-4 h-4 text-cyan-300" />
-                </button>
-                <button 
-                  type="button" 
-                  className="p-2 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors"
-                  title="Configure Parameters"
-                >
-                  <SlidersHorizontal className="w-4 h-4 text-white/70" />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <button 
-                  type="button" 
-                  className="p-2 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors"
-                  title="Voice Input"
-                >
-                  <Mic className="w-4 h-4" />
-                </button>
-                <button 
-                  type="submit" 
-                  disabled={!inputPrompt.trim() || (stage !== 'idle' && stage !== 'completed')}
-                  className="p-2.5 rounded-2xl bg-white text-slate-950 hover:bg-cyan-100 transition-all shadow-lg disabled:opacity-30 disabled:hover:bg-white cursor-pointer"
-                  title="Submit Prompt"
-                >
-                  <ArrowUp className="w-4 h-4 font-bold" />
-                </button>
+        {/* Chat Feed */}
+        <div className={`flex-1 overflow-y-auto space-y-4 pr-1 ${messages.length === 0 ? 'hidden' : 'block'}`}>
+          {messages.map((msg) => (
+            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div 
+                className={`max-w-[85%] px-4 py-2.5 text-[14px] leading-relaxed ${
+                  msg.role === 'user' 
+                    ? 'bg-[#8B5CF6] text-white rounded-[20px] rounded-tr-[4px]' 
+                    : 'bg-[#333333] text-white rounded-[20px] rounded-tl-[4px]'
+                }`}
+              >
+                {msg.content}
               </div>
             </div>
+          ))}
+          
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-[#333333] text-white px-4 py-3 rounded-[20px] rounded-tl-[4px] flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
 
-          </div>
+        {/* Input Field - Matches the video layout */}
+        <form onSubmit={handleSubmit} className="mt-4 relative w-full">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask AI Anything"
+            className="w-full bg-[#1a1a1a] text-sm text-white placeholder-[#666666] rounded-full pl-5 pr-14 py-3.5 outline-none border border-white/5 focus:border-purple-500/30 transition-colors"
+          />
+          {/* The specific glowing purple circle button from the video */}
+          <button 
+            type="submit" 
+            disabled={!input.trim() || isLoading}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center transition-all disabled:opacity-50 border-2 border-[#5b32a8] bg-transparent"
+          >
+            <div className="w-2.5 h-2.5 rounded-full bg-[#9d72ff] shadow-[0_0_12px_rgba(157,114,255,0.8)]" />
+          </button>
         </form>
 
-        {/* Active Execution Stream Card (Appears when running) */}
-        {stage !== 'idle' && (
-          <div className="w-full mt-6 bg-slate-950/60 backdrop-blur-2xl border border-white/15 rounded-3xl p-5 text-left shadow-2xl animate-fade-in">
-            <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-                <span className="text-[11px] font-mono tracking-wider uppercase text-white/80">Pipeline: {stage}</span>
-              </div>
-            </div>
-
-            {evaluation?.edgeCasesTested && (
-              <div className="mb-3">
-                <p className="text-[11px] font-medium text-white/60 mb-1.5">Evaluations:</p>
-                <div className="space-y-1 text-xs">
-                  {evaluation.edgeCasesTested.map((tc: { caseName: string, passed: boolean }, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between bg-white/5 px-2.5 py-1 rounded-lg">
-                      <span className="text-white/80">{tc.caseName}</span>
-                      <span className={tc.passed ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold'}>
-                        {tc.passed ? 'PASS' : 'FAIL'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="h-40 overflow-hidden rounded-xl border border-white/10 bg-black/50">
-              <TerminalOutput logs={logs} />
-            </div>
-          </div>
-        )}
       </div>
-
-      {/* Footer Branding */}
-      <div className="w-full text-center z-10 pb-2">
-        <p className="text-[10px] uppercase tracking-[0.25em] text-white/40 font-medium">
-          DESIGNED BY <span className="text-white/70 font-semibold">MULTI-AGENT ARCHITECT</span>
-        </p>
-      </div>
-
     </main>
   );
 }

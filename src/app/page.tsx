@@ -4,24 +4,18 @@ import React, { useState } from 'react';
 import { useAgentStream } from '@/hooks/use-agent-stream';
 import { TerminalOutput } from '@/components/terminal-output';
 import { 
-  Menu, 
-  ChevronDown, 
   Plus, 
   Mic, 
-  AudioWaveform, 
-  Image as ImageIcon, 
-  Edit3, 
-  Globe, 
-  Cpu, 
-  CheckCircle2, 
-  AlertCircle, 
-  Loader2,
-  RotateCcw
+  ArrowUp, 
+  Sparkles, 
+  SlidersHorizontal, 
+  RotateCcw,
+  Cpu
 } from 'lucide-react';
 
 export default function DashboardPage() {
   const [inputPrompt, setInputPrompt] = useState('');
-  const { stage, logs, plan, artifact, evaluation, streamedReasoningText, runPipeline, resetPipeline } = useAgentStream();
+  const { stage, logs, evaluation, runPipeline, resetPipeline } = useAgentStream();
 
   const handleStart = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,135 +23,118 @@ export default function DashboardPage() {
     runPipeline(inputPrompt);
   };
 
-  const handleQuickAction = (promptText: string) => {
-    setInputPrompt(promptText);
-    runPipeline(promptText);
-  };
-
   return (
-    <main className="relative min-h-screen w-full flex flex-col items-center justify-between px-4 py-6 bg-gradient-to-b from-[#0052D4] via-[#4364F7] to-[#6FB1FC] text-white overflow-x-hidden">
-      {/* Top Navigation Bar */}
-      <div className="w-full max-w-4xl flex items-center justify-between z-10">
-        <button className="p-2 rounded-full hover:bg-white/10 transition-colors">
-          <Menu className="w-6 h-6 text-white" />
-        </button>
+    <main className="relative min-h-screen w-full flex flex-col items-center justify-between px-6 py-8 bg-gradient-to-br from-[#0a192f] via-[#11224055] to-[#020c1b] text-white overflow-x-hidden">
+      
+      {/* Immersive Moving Fluid Background Layer */}
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-950/40 via-cyan-900/30 to-slate-950/80 animate-fluid-bg pointer-events-none -z-10" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none -z-10 animate-pulse" />
 
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 cursor-pointer hover:bg-white/15 transition-all">
-          <span className="font-semibold text-sm tracking-wide">Multi-Agent AI</span>
-          <ChevronDown className="w-4 h-4 text-white/70" />
+      {/* Top Header */}
+      <div className="w-full max-w-3xl flex items-center justify-between z-10 opacity-70 hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
+            <Cpu className="w-3.5 h-3.5 text-cyan-300" />
+          </div>
+          <span className="text-xs font-medium tracking-widest uppercase">Multi-Agent Core</span>
         </div>
-
-        <div className="w-10" /> {/* Spacer for symmetry */}
+        {stage !== 'idle' && (
+          <button 
+            onClick={resetPipeline}
+            className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 transition-all"
+          >
+            <RotateCcw className="w-3 h-3" /> Reset Session
+          </button>
+        )}
       </div>
 
-      {/* Main Center Content (Idle / Initial View) */}
-      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-2xl text-center z-10 my-auto">
-        {/* Logo / Icon */}
-        <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-lg shadow-black/10 mb-6">
-          <Cpu className="w-8 h-8 text-white animate-pulse" />
-        </div>
-
-        {/* Greeting */}
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
-          Hi, Developer.
-        </h1>
-        <p className="text-white/80 text-sm md:text-base mb-8">
-          What architectural workflow are we building today?
+      {/* Center Hero & Minimalist Input Capsule */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-xl text-center z-10 my-auto">
+        
+        {/* Minimalist Subtitle */}
+        <p className="text-white/60 text-sm md:text-base font-light tracking-wide mb-8">
+          What’s on your mind today?
         </p>
 
-        {/* Input Bar */}
-        <form onSubmit={handleStart} className="w-full relative flex items-center mb-6">
-          <div className="w-full flex items-center bg-white/15 backdrop-blur-xl border border-white/25 rounded-full shadow-2xl px-4 py-3 transition-all focus-within:bg-white/20 focus-within:border-white/40">
-            <button 
-              type="button" 
-              className="p-2 rounded-full hover:bg-white/20 text-white/90 transition-colors mr-2"
-            >
-              <Plus className="w-5 h-5" />
-            </button>
-
+        {/* Floating Frosted Glass Capsule Search Bar */}
+        <form onSubmit={handleStart} className="w-full">
+          <div className="relative flex flex-col bg-white/[0.07] backdrop-blur-2xl border border-white/20 rounded-[28px] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] p-3.5 transition-all focus-within:bg-white/[0.12] focus-within:border-white/40 focus-within:shadow-[0_8px_40px_0_rgba(56,189,248,0.2)]">
+            
             <input
               type="text"
               value={inputPrompt}
               onChange={(e) => setInputPrompt(e.target.value)}
-              placeholder="Ask anything or describe a system..."
-              className="flex-1 bg-transparent border-none outline-none text-white placeholder-white/60 text-sm md:text-base px-2"
+              placeholder="Ask me anything..."
+              className="w-full bg-transparent border-none outline-none text-white placeholder-white/40 text-base md:text-lg px-3 py-2 font-light"
             />
 
-            <div className="flex items-center gap-1.5 ml-2">
-              <button 
-                type="button" 
-                className="p-2 rounded-full hover:bg-white/20 text-white/90 transition-colors"
-              >
-                <Mic className="w-5 h-5" />
-              </button>
-              <button 
-                type="submit" 
-                disabled={stage !== 'idle' && stage !== 'completed'}
-                className="p-2.5 rounded-full bg-white text-blue-600 hover:bg-blue-50 transition-all shadow-md disabled:opacity-50"
-              >
-                {stage !== 'idle' && stage !== 'completed' ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <AudioWaveform className="w-5 h-5" />
-                )}
-              </button>
+            {/* Bottom Controls inside the Capsule */}
+            <div className="flex items-center justify-between pt-2 px-1 border-t border-white/10 mt-1">
+              <div className="flex items-center gap-1.5">
+                <button 
+                  type="button" 
+                  className="p-2 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                  title="Add Attachment"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+                <button 
+                  type="button" 
+                  className="p-2 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                  title="Tools & Agents"
+                >
+                  <Sparkles className="w-4 h-4 text-cyan-300" />
+                </button>
+                <button 
+                  type="button" 
+                  className="p-2 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                  title="Configure Parameters"
+                >
+                  <SlidersHorizontal className="w-4 h-4 text-white/70" />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button 
+                  type="button" 
+                  className="p-2 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                  title="Voice Input"
+                >
+                  <Mic className="w-4 h-4" />
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={!inputPrompt.trim() || (stage !== 'idle' && stage !== 'completed')}
+                  className="p-2.5 rounded-2xl bg-white text-slate-950 hover:bg-cyan-100 transition-all shadow-lg disabled:opacity-30 disabled:hover:bg-white cursor-pointer"
+                  title="Submit Prompt"
+                >
+                  <ArrowUp className="w-4 h-4 font-bold" />
+                </button>
+              </div>
             </div>
+
           </div>
         </form>
 
-        {/* Quick Action Pills */}
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <button 
-            onClick={() => handleQuickAction("Design a scalable microservices architecture")}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-xs md:text-sm font-medium transition-all"
-          >
-            <ImageIcon className="w-4 h-4 text-cyan-200" />
-            <span>Design Microservices</span>
-          </button>
-
-          <button 
-            onClick={() => handleQuickAction("Write a high-throughput async worker in Node.js")}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-xs md:text-sm font-medium transition-all"
-          >
-            <Edit3 className="w-4 h-4 text-amber-200" />
-            <span>Write Async Worker</span>
-          </button>
-
-          <button 
-            onClick={() => handleQuickAction("Analyze system bottlenecks and fault tolerance")}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-xs md:text-sm font-medium transition-all"
-          >
-            <Globe className="w-4 h-4 text-emerald-200" />
-            <span>Audit Bottlenecks</span>
-          </button>
-        </div>
-
-        {/* Active Pipeline Execution Feed (Appears when running) */}
+        {/* Active Execution Stream Card (Appears when running) */}
         {stage !== 'idle' && (
-          <div className="w-full mt-8 bg-black/40 backdrop-blur-xl border border-white/20 rounded-2xl p-4 text-left shadow-2xl animate-fade-in">
+          <div className="w-full mt-6 bg-slate-950/60 backdrop-blur-2xl border border-white/15 rounded-3xl p-5 text-left shadow-2xl animate-fade-in">
             <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-                <span className="text-xs font-semibold tracking-wider uppercase text-white/90">Pipeline Stage: {stage}</span>
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                <span className="text-[11px] font-mono tracking-wider uppercase text-white/80">Pipeline: {stage}</span>
               </div>
-              <button 
-                onClick={resetPipeline}
-                className="flex items-center gap-1 text-xs px-2 py-1 rounded bg-white/10 hover:bg-white/20 transition-colors"
-              >
-                <RotateCcw className="w-3 h-3" /> Reset
-              </button>
             </div>
 
-            {/* Evaluation data if available */}
             {evaluation?.edgeCasesTested && (
-              <div className="mb-4">
-                <p className="text-xs font-semibold text-white/70 mb-2">Edge Cases Tested:</p>
-                <div className="space-y-1 text-zinc-300 text-xs">
+              <div className="mb-3">
+                <p className="text-[11px] font-medium text-white/60 mb-1.5">Evaluations:</p>
+                <div className="space-y-1 text-xs">
                   {evaluation.edgeCasesTested.map((tc: { caseName: string, passed: boolean }, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between bg-white/5 px-3 py-1.5 rounded">
-                      <span>{tc.caseName}</span>
-                      <span className={tc.passed ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold'}>
-                        {tc.passed ? 'PASSED' : 'FAILED'}
+                    <div key={idx} className="flex items-center justify-between bg-white/5 px-2.5 py-1 rounded-lg">
+                      <span className="text-white/80">{tc.caseName}</span>
+                      <span className={tc.passed ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold'}>
+                        {tc.passed ? 'PASS' : 'FAIL'}
                       </span>
                     </div>
                   ))}
@@ -165,8 +142,7 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Terminal Output */}
-            <div className="h-48 overflow-hidden rounded-xl border border-white/10 bg-black/60">
+            <div className="h-40 overflow-hidden rounded-xl border border-white/10 bg-black/50">
               <TerminalOutput logs={logs} />
             </div>
           </div>
@@ -174,11 +150,12 @@ export default function DashboardPage() {
       </div>
 
       {/* Footer Branding */}
-      <div className="w-full text-center z-10 pt-4">
-        <p className="text-[11px] uppercase tracking-widest text-white/60 font-medium">
-          DESIGN BY: <span className="font-bold text-white tracking-wider">Multi-Agent Architect</span>
+      <div className="w-full text-center z-10 pb-2">
+        <p className="text-[10px] uppercase tracking-[0.25em] text-white/40 font-medium">
+          DESIGNED BY <span className="text-white/70 font-semibold">MULTI-AGENT ARCHITECT</span>
         </p>
       </div>
+
     </main>
   );
 }

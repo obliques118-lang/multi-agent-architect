@@ -1,131 +1,217 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Bot, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+  Home, Search, LayoutGrid, Star, Users, Compass, 
+  LayoutTemplate, GraduationCap, Gift, Zap, Plus, 
+  Paperclip, ChevronDown, MessageSquare, Mic, ArrowUp,
+  PanelLeft
+} from 'lucide-react';
 
-type Message = {
-  id: string;
-  role: 'user' | 'ai';
-  content: string;
-};
-
-export default function ChatUI() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Auto-scroll to the latest message
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+export default function CreatorDashboard() {
+  const [prompt, setPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [agentStatus, setAgentStatus] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!prompt.trim() || isGenerating) return;
 
-    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: input };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
+    setIsGenerating(true);
+    setAgentStatus('Orchestrator: Analyzing request...');
 
     try {
-      // Connects to your production API route
-      const response = await fetch('/api/chat', {
+      const response = await fetch('/api/orchestrator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage.content }),
+        body: JSON.stringify({ prompt }),
       });
 
-      if (!response.ok) throw new Error('Network response failed');
-      
-      const data = await response.json();
-      
-      const aiMessage: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: data.reply };
-      setMessages((prev) => [...prev, aiMessage]);
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (reader) {
+        let done = false;
+        while (!done) {
+          const { value, done: doneReading } = await reader.read();
+          done = doneReading;
+          const chunkValue = decoder.decode(value);
+          if (chunkValue) setAgentStatus(chunkValue);
+        }
+      }
     } catch (error) {
-      console.error("Chat error:", error);
-      const errorMessage: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: "Sorry, I'm having trouble connecting to the server." };
-      setMessages((prev) => [...prev, errorMessage]);
+      console.error("Generation failed:", error);
+      setAgentStatus('System Error: Pipeline failed.');
     } finally {
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsGenerating(false);
+        setAgentStatus(null);
+        setPrompt('');
+      }, 2000);
     }
   };
 
   return (
-    <main className="min-h-screen bg-[#121212] flex items-center justify-center p-4 font-sans">
-      <div className="w-full max-w-[420px] bg-[#242424] rounded-[24px] p-6 shadow-2xl flex flex-col h-[550px] border border-white/5 relative">
-        
-        {/* Header - Matches the video exactly */}
-        {messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center space-y-3">
-            <div className="mb-2">
-              <Bot className="w-12 h-12 text-white" strokeWidth={1.5} />
-            </div>
-            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-fuchsia-400">
-              Ask AI Anything
-            </h1>
-            <p className="text-[#888888] text-[13px] leading-relaxed max-w-[280px]">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent.
-            </p>
+    <div className="flex h-screen w-full bg-white text-gray-900 font-sans overflow-hidden">
+      
+      {/* Sidebar Navigation */}
+      <aside className="w-[260px] h-full flex flex-col border-r border-gray-100 bg-[#fbfbfb] px-4 py-5 flex-shrink-0">
+        <div className="flex items-center justify-between mb-6">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-orange-400 to-pink-500 flex items-center justify-center">
+            <span className="text-white text-xs font-bold shadow-sm">♥</span>
           </div>
-        ) : (
-          <div className="flex items-center gap-3 pb-4 border-b border-white/5 mb-4">
-             <div className="flex items-center justify-center">
-              <Bot className="w-7 h-7 text-white" />
-            </div>
-            <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-fuchsia-400">
-              Ask AI Anything
-            </h1>
-          </div>
-        )}
-
-        {/* Chat Feed */}
-        <div className={`flex-1 overflow-y-auto space-y-4 pr-1 ${messages.length === 0 ? 'hidden' : 'block'}`}>
-          {messages.map((msg) => (
-            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div 
-                className={`max-w-[85%] px-4 py-2.5 text-[14px] leading-relaxed ${
-                  msg.role === 'user' 
-                    ? 'bg-[#8B5CF6] text-white rounded-[20px] rounded-tr-[4px]' 
-                    : 'bg-[#333333] text-white rounded-[20px] rounded-tl-[4px]'
-                }`}
-              >
-                {msg.content}
-              </div>
-            </div>
-          ))}
-          
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-[#333333] text-white px-4 py-3 rounded-[20px] rounded-tl-[4px] flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
+          <button className="text-gray-400 hover:text-gray-600 transition-colors">
+            <PanelLeft className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* Input Field - Matches the video layout */}
-        <form onSubmit={handleSubmit} className="mt-4 relative w-full">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask AI Anything"
-            className="w-full bg-[#1a1a1a] text-sm text-white placeholder-[#666666] rounded-full pl-5 pr-14 py-3.5 outline-none border border-white/5 focus:border-purple-500/30 transition-colors"
+        <button className="flex items-center justify-between w-full p-2 mb-6 hover:bg-gray-100 rounded-lg transition-colors">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-indigo-600 flex items-center justify-center text-white text-xs font-medium">S</div>
+            <span className="text-[13px] font-medium">Samlee's Workspace</span>
+          </div>
+          <ChevronDown className="w-4 h-4 text-gray-500" />
+        </button>
+
+        <div className="space-y-6 flex-1 overflow-y-auto hide-scrollbar">
+          <div className="space-y-1">
+            <NavItem icon={<Home className="w-4 h-4" />} label="Home" active />
+            <NavItem icon={<Search className="w-4 h-4" />} label="Search" />
+          </div>
+
+          <div className="space-y-1">
+            <h4 className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Projects</h4>
+            <NavItem icon={<LayoutGrid className="w-4 h-4" />} label="All projects" />
+            <NavItem icon={<Star className="w-4 h-4" />} label="Starred" />
+            <NavItem icon={<Users className="w-4 h-4" />} label="Shared with me" />
+          </div>
+
+          <div className="space-y-1">
+            <h4 className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Resources</h4>
+            <NavItem icon={<Compass className="w-4 h-4" />} label="Discover" />
+            <NavItem icon={<LayoutTemplate className="w-4 h-4" />} label="Templates" />
+            <NavItem icon={<GraduationCap className="w-4 h-4" />} label="Learn" />
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-gray-100 space-y-2">
+          <div className="flex items-center justify-between p-2 hover:bg-gray-100 rounded-lg cursor-pointer">
+            <div>
+              <p className="text-[13px] font-medium text-gray-700">Share Workspace</p>
+              <p className="text-[11px] text-gray-500">Get 10 credits each</p>
+            </div>
+            <Gift className="w-4 h-4 text-gray-400" />
+          </div>
+          <div className="flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer border border-gray-100">
+            <div>
+              <p className="text-[13px] font-medium text-gray-700">Upgrade to Pro</p>
+              <p className="text-[11px] text-gray-500">Unlock more benefits</p>
+            </div>
+            <Zap className="w-4 h-4 text-indigo-500 fill-indigo-100" />
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area with Mesh Gradient Background */}
+      <main className="flex-1 relative flex flex-col items-center pt-24 px-6">
+        {/* CSS Mesh Gradient */}
+        <div className="absolute inset-0 -z-10 bg-white overflow-hidden">
+          <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-blue-100/50 rounded-full blur-[100px]" />
+          <div className="absolute bottom-[-20%] left-[-10%] w-[80%] h-[80%] bg-pink-500/30 rounded-full blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[70%] h-[70%] bg-blue-500/20 rounded-full blur-[120px]" />
+          <div className="absolute top-[20%] right-[10%] w-[40%] h-[40%] bg-indigo-200/40 rounded-full blur-[100px]" />
+        </div>
+
+        {/* Top Tag */}
+        <button className="flex items-center gap-2 px-4 py-1.5 bg-white/60 backdrop-blur-md border border-white/40 rounded-full shadow-sm hover:bg-white/80 transition-colors mb-8 text-[13px] font-medium text-gray-700">
+          <span className="text-pink-500 font-semibold">$50</span> Buy a gift card <span className="text-gray-400 ml-1">→</span>
+        </button>
+
+        {/* Greeting */}
+        <h1 className="text-[32px] font-semibold tracking-tight text-gray-900 mb-8">
+          Time to ship, Rajat
+        </h1>
+
+        {/* Floating Input Component */}
+        <form 
+          onSubmit={handleSubmit}
+          className="w-full max-w-[640px] bg-[#fdfdfd] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100/60 rounded-[28px] p-2 flex flex-col transition-all focus-within:ring-2 focus-within:ring-pink-500/20"
+        >
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Ask the AI to create..."
+            className="w-full h-[60px] resize-none bg-transparent border-none outline-none text-[15px] text-gray-800 placeholder-gray-400 px-4 py-3"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit(e);
+              }
+            }}
           />
-          {/* The specific glowing purple circle button from the video */}
-          <button 
-            type="submit" 
-            disabled={!input.trim() || isLoading}
-            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center transition-all disabled:opacity-50 border-2 border-[#5b32a8] bg-transparent"
-          >
-            <div className="w-2.5 h-2.5 rounded-full bg-[#9d72ff] shadow-[0_0_12px_rgba(157,114,255,0.8)]" />
-          </button>
+          
+          <div className="flex items-center justify-between px-2 pb-1">
+            <div className="flex items-center gap-1">
+              <IconButton icon={<Plus className="w-4 h-4" />} label="Add" />
+              <IconButton icon={<Paperclip className="w-4 h-4" />} label="Attach" text="Attach" />
+              <IconButton icon={<ChevronDown className="w-4 h-4 ml-1" />} label="Theme" text="Theme" />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-gray-100 cursor-pointer transition-colors text-gray-500">
+                <MessageSquare className="w-4 h-4" />
+                <span className="text-[13px] font-medium">Chat</span>
+              </div>
+              <button type="button" className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                <Mic className="w-[18px] h-[18px]" />
+              </button>
+              <button 
+                type="submit"
+                disabled={!prompt.trim() || isGenerating}
+                className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center hover:bg-gray-800 disabled:opacity-30 transition-all"
+              >
+                <ArrowUp className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </form>
 
-      </div>
-    </main>
+        {/* Status Indicator */}
+        <div className="h-6 mt-4">
+          {agentStatus && (
+            <p className="text-[13px] font-medium text-gray-600 animate-pulse bg-white/50 backdrop-blur-sm px-4 py-1 rounded-full">
+              {agentStatus}
+            </p>
+          )}
+        </div>
+
+        {/* Bottom Templates Shelf (Partially visible) */}
+        <div className="w-full max-w-[900px] mt-auto bg-white rounded-t-[32px] p-6 shadow-[0_-4px_20px_rgb(0,0,0,0.02)] border-t border-x border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-[15px] font-medium text-gray-800">Templates</h3>
+            <button className="text-[13px] text-gray-500 hover:text-gray-800">Browse all →</button>
+          </div>
+          {/* Add your template cards here */}
+          <div className="h-32 bg-gray-50 rounded-xl border border-gray-100 border-dashed" />
+        </div>
+      </main>
+    </div>
   );
 }
+
+// Reusable Components
+const NavItem = ({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) => (
+  <button className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-[13px] ${
+    active ? 'bg-white text-gray-900 shadow-sm border border-gray-100/50' : 'text-gray-600 hover:bg-gray-100'
+  }`}>
+    <span className={active ? 'text-gray-900' : 'text-gray-400'}>{icon}</span>
+    <span className="font-medium">{label}</span>
+  </button>
+);
+
+const IconButton = ({ icon, label, text }: { icon: React.ReactNode, label: string, text?: string }) => (
+  <button title={label} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full hover:bg-gray-100 transition-colors text-gray-500">
+    {icon}
+    {text && <span className="text-[13px] font-medium">{text}</span>}
+  </button>
+);

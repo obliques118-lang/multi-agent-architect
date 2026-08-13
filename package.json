@@ -30,7 +30,9 @@
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
     "typescript": "^5",
-    "@types/react-syntax-highlighter": "^15.5.11"
+    "@types/react-syntax-highlighter": "^15.5.11",
+    "@opennextjs/cloudflare": "^0.5.0",
+    "wrangler": "^3.99.0"
   }
 
 }

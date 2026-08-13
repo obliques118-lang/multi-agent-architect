@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 
+// Prevent Netlify function timeouts (sets max duration to 60s)
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     const { message } = await req.json();
@@ -8,14 +12,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    // Pulling your keys securely from Netlify Environment Variables
     const deepseekKey = process.env.DEEPSEEK_API_KEY;
     const qwenKey = process.env.QWEN_API_KEY;
     const geminiKey = process.env.GEMINI_API_KEY;
 
     if (!deepseekKey || !qwenKey || !geminiKey) {
       return NextResponse.json({ 
-        reply: "SYSTEM ERROR: Missing API keys. Make sure DEEPSEEK_API_KEY, QWEN_API_KEY, and GEMINI_API_KEY are added to your Netlify Environment Variables." 
+        reply: "SYSTEM ERROR: Missing API keys in Netlify environment variables. Please check DEEPSEEK_API_KEY, QWEN_API_KEY, and GEMINI_API_KEY." 
       });
     }
 
@@ -37,14 +40,13 @@ export async function POST(req: Request) {
       })
     });
     
-    if (!dsResponse.ok) throw new Error(`DeepSeek API failed: ${dsResponse.statusText}`);
+    if (!dsResponse.ok) throw new Error(`DeepSeek API failed (${dsResponse.status}): ${dsResponse.statusText}`);
     const dsData = await dsResponse.json();
     const plan = dsData.choices[0].message.content;
 
     // ==========================================
     // AGENT 2: QWEN (The Executor)
     // ==========================================
-    // Using Alibaba's DashScope OpenAI-compatible endpoint
     const qwenResponse = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -60,7 +62,7 @@ export async function POST(req: Request) {
       })
     });
 
-    if (!qwenResponse.ok) throw new Error(`Qwen API failed: ${qwenResponse.statusText}`);
+    if (!qwenResponse.ok) throw new Error(`Qwen API failed (${qwenResponse.status}): ${qwenResponse.statusText}`);
     const qwenData = await qwenResponse.json();
     const executionDraft = qwenData.choices[0].message.content;
 
@@ -81,17 +83,14 @@ export async function POST(req: Request) {
       })
     });
 
-    if (!geminiResponse.ok) throw new Error(`Gemini API failed: ${geminiResponse.statusText}`);
+    if (!geminiResponse.ok) throw new Error(`Gemini API failed (${geminiResponse.status}): ${geminiResponse.statusText}`);
     const geminiData = await geminiResponse.json();
     const finalOutput = geminiData.candidates[0].content.parts[0].text;
 
-    // ==========================================
-    // RETURN FINAL POLISHED OUTPUT TO UI
-    // ==========================================
     return NextResponse.json({ reply: finalOutput });
 
   } catch (error: any) {
     console.error('Multi-Agent Pipeline Error:', error);
-    return NextResponse.json({ reply: `Pipeline Error: ${error.message}` }, { status: 500 });
+    return NextResponse.json({ reply: `🚨 **Pipeline Failed:** ${error.message}` }, { status: 500 });
   }
 }

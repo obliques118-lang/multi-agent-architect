@@ -1,13 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
-    // Skip type checking during production build
     ignoreBuildErrors: true,
   },
   eslint: {
-    // Skip ESLint during production build
     ignoreDuringBuilds: true,
   },
+  productionBrowserSourceMaps: false,
 };
 
-module.exports = nextConfig;
+module.exports = nextConfig; 
+// Note: if your file is named next.config.mjs, use `export default nextConfig;` at the bottom instead.
